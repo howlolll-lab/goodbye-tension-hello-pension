@@ -107,6 +107,7 @@
 
     /* dashboard metrics */
     .dashGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    .dashGrid2{ grid-template-columns: 1fr 1fr !important; }
     .metric{
       border:1px solid var(--line);
       border-radius:var(--r);
@@ -233,7 +234,8 @@
   const TARGET_DEFAULT = 66;
   const PAGE_SIZE = 20;
 
-  const $ = (s, el=document)=>el.querySelector(s);
+  const $ = (s, el)=> (el || document).querySelector(s);
+function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventListener(ev,fn);}
 
   function load(k, f){
     try{
@@ -287,8 +289,8 @@
     $("#mBody").innerHTML="";
     $("#mFoot").innerHTML="";
   }
-  $("#mClose").addEventListener("click", closeModal);
-  $("#backdrop").addEventListener("click", (e)=>{ if(e.target === $("#backdrop")) closeModal(); });
+  on("mClose","click", closeModal);
+  on("backdrop","click", (e)=>{ if(e.target === $("#backdrop")) closeModal(); });
 
   // session
   function isUnlocked(){ return Date.now() < (state.session?.unlockedUntil || 0); }
@@ -467,6 +469,7 @@
   }
 
   
+  
   function dashboardView(){
     const target = clampTarget(state.settings.target);
     const remain = Math.max(0, target - state.points);
@@ -483,8 +486,8 @@
     recent30.forEach(l=>{
       const t = (l.note||"").toLowerCase();
       if(/加班|超時|爆量|忙|壓力|burnout|趕|疲|累/.test(t)) buckets.work++;
-      else if(/同事|主管|老闆|老闆娘|人際|溝通|politics/.test(t)) buckets.people++;
-      else if(/薪|薪水|加薪|年終|獎金|待遇|compensation/.test(t)) buckets.pay++;
+      else if(/同事|主管|老闆|老闆娘|人際|溝通|politics|沒講|沒通知|資訊沒同步/.test(t)) buckets.people++;
+      else if(/薪|薪水|加薪|年終|獎金|待遇|福利|compensation/.test(t)) buckets.pay++;
       else if(/健康|睡眠|失眠|焦慮|胃痛|頭痛|生病/.test(t)) buckets.health++;
       else if(/成長|學習|沒發展|職涯|career|轉職/.test(t)) buckets.growth++;
       else buckets.other++;
@@ -504,16 +507,11 @@
       <div class="stack">
         <div class="panel">
           <h2>Dashboard</h2>
-          <div class="dashGrid">
-            <div class="metric" id="mPoints" role="button" tabindex="0">
-              <div class="k">Points</div>
+          <div class="dashGrid dashGrid2">
+            <div class="metric" id="mProgress" role="button" tabindex="0">
+              <div class="k">Points · Remaining</div>
               <div class="v">${state.points} / ${target}</div>
-              <div class="s">Tap to open Point card & collect.</div>
-            </div>
-            <div class="metric" id="mRemain" role="button" tabindex="0">
-              <div class="k">Remaining</div>
-              <div class="v">${remain}</div>
-              <div class="s">Countdown to target points.</div>
+              <div class="s">Remaining ${remain}. Tap to open Point card.</div>
             </div>
             <div class="metric" id="mBurn" role="button" tabindex="0">
               <div class="k">Burnout level</div>
@@ -551,6 +549,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
       </div>
     `;
   }
+
 
   function pointsView(){
     const target = clampTarget(state.settings.target);
@@ -661,7 +660,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
       <div class="container">
         <div class="topbar">
           <div class="topLeft">
-            <button class="hamburger" id="btnDrawer">Menu</button>
+            <button class="hamburger" id="btnDrawer">${sub==="points" ? "Dashboard" : "Point card"}</button>
             <div style="min-width:0;">
               <div class="brand">Goodbye tension, hello pension</div>
               <div class="kpi">Sign out · ${state.points}/${target} · remaining ${remain}</div>
@@ -707,7 +706,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
   }
 
   function bindLogin(){
-    $("#btnLogin").addEventListener("click", async ()=>{
+    on("btnLogin","click", async ()=>{
       const username = ($("#u").value||"").trim();
       const pass = ($("#p").value||"");
       if(!username || !pass){
@@ -774,7 +773,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
       render();
     });
 
-    $("#btnForgot").addEventListener("click", ()=>{
+    on("btnForgot","click", ()=>{
       if(!state.user){
         toast("No account", "No local account found yet.");
         return;
@@ -877,12 +876,12 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
     const {token, email} = parseResetParams();
     $("#re").value = email || "";
 
-    $("#btnBack").addEventListener("click", ()=>{
+    on("btnBack","click", ()=>{
       location.hash = "#/login";
       render();
     });
 
-    $("#btnReset").addEventListener("click", async ()=>{
+    on("btnReset","click", async ()=>{
       if(!state.user){
         toast("No account", "No local account found.");
         return;
@@ -954,14 +953,14 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
       overlay.setAttribute("aria-hidden","false");
     };
 
-    document.getElementById("btnDrawer").addEventListener("click", ()=>{
-      if(drawer.classList.contains("show")) closeDrawer();
-      else openDrawer();
+    on("btnDrawer","click", ()=>{
+      if(sub === "points") location.hash = "#/app/dashboard";
+      else location.hash = "#/app/points";
     });
     overlay.addEventListener("click", closeDrawer);
 
     // sign out
-    $("#btnSignout").addEventListener("click", ()=>{
+    on("btnSignout","click", ()=>{
       lock();
       toast("Signed out", "");
       location.hash = "#/login";
@@ -969,7 +968,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
     });
 
     // settings modal (global)
-    $("#btnSettings").addEventListener("click", ()=>{
+    on("btnSettings","click", ()=>{
       const startDate = state.settings.startDate || "";
       const rec = recommendedPointsFromStart(startDate);
 
@@ -1007,7 +1006,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
         const r = recommendedPointsFromStart(d);
         $("#recTarget").value = `${r.target} points ${r.tier?` · ${r.tier}`:""}`;
       };
-      $("#setStart").addEventListener("input", updateRec);
+      on("setStart","input", updateRec);
 
       $("#stClose").onclick = closeModal;
       $("#stApply").onclick = ()=>{
@@ -1037,8 +1036,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
         el.addEventListener("click", fn);
         el.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fn(); } });
       };
-      bindCard("mPoints", goPoints);
-      bindCard("mRemain", goPoints);
+      bindCard("mProgress", goPoints);
       bindCard("mBurn", ()=>{
         const sec = document.getElementById("insightsSection");
         if(sec) sec.scrollIntoView({behavior:"smooth", block:"start"});
@@ -1053,18 +1051,18 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
     const pageCount = Math.max(1, Math.ceil(target / PAGE_SIZE));
     const page = Math.min(pageCount-1, Math.max(0, state.settings.page || 0));
 
-    $("#btnPrev").addEventListener("click", ()=>{
+    on("btnPrev","click", ()=>{
       state.settings.page = Math.max(0, page-1);
       save(K.settings, state.settings);
       render();
     });
-    $("#btnNext").addEventListener("click", ()=>{
+    on("btnNext","click", ()=>{
       state.settings.page = Math.min(pageCount-1, page+1);
       save(K.settings, state.settings);
       render();
     });
 
-    $("#btnAdd").addEventListener("click", ()=>{
+    on("btnAdd","click", ()=>{
       const target = clampTarget(state.settings.target);
       if(state.points >= target){
         toast("Completed", "You already reached the target.");
