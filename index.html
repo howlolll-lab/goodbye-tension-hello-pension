@@ -344,66 +344,35 @@
 
   // "AI analysis" (local heuristic, no network)
   function aiAnalyze(note, ts, n, points, target){
-    const textRaw = (note || "");
-    const text = textRaw.toLowerCase();
+    const text = (note || "").toLowerCase();
     const tags = [];
     const add = (t)=>{ if(!tags.includes(t)) tags.push(t); };
 
-    // System / process (treat "報價" as process context by default)
-    if(/流程|制度|規則|管理|sop|標準|版本|變更|改版|改方式|改規格|改需求|改單|重做|重工|返工|補件|重算|重跑|重新|報價|對帳|核銷|請款|交接/.test(text)) add("system / process");
-
-    // Workload / burnout
-    if(/加班|超時|爆量|忙|趕|壓力|崩潰|burnout|疲|累|身心|撐不住|被塞/.test(text)) add("workload / burnout");
-
-    // People / communication
-    if(/同事|主管|老闆|老闆娘|團隊|溝通|沒講|不講|不說|不通知|資訊沒同步|情緒勒索|人際|politics|推來推去|踢皮球/.test(text)) add("people / communication");
-
-    // Compensation (restrict to pay/benefits only; avoid "報價/成本" false positives)
-    if(/薪|薪水|加薪|年終|獎金|待遇|福利|調薪|底薪|bonus|raise|compensation/.test(text)) add("compensation");
-
-    // Career growth
-    if(/成長|學習|學不到|沒發展|職涯|career|轉職|升遷|前景|技能|履歷|作品集/.test(text)) add("career growth");
-
-    // Health
-    if(/健康|睡眠|失眠|焦慮|胃痛|頭痛|生病|心悸|胸悶|看醫生|藥/.test(text)) add("health");
-
-    // Recognition / fairness
-    if(/尊重|委屈|不被重視|不公平|覺得被|被當|被看不起|功勞|背鍋/.test(text)) add("recognition / fairness");
-
+    if(/加班|超時|爆量|忙|趕|壓力|崩潰|burnout|疲|累|身心/.test(text)) add("workload / burnout");
+    if(/同事|主管|老闆|老闆娘|團隊|溝通|情緒勒索|人際|politics/.test(text)) add("people / communication");
+    if(/薪|薪水|加薪|年終|獎金|待遇|錢|報價|cost|compensation/.test(text)) add("compensation");
+    if(/制度|流程|規則|管理|okr|kpi/.test(text)) add("system / process");
+    if(/成長|學習|學不到|沒發展|職涯|career|轉職/.test(text)) add("career growth");
+    if(/健康|睡眠|失眠|焦慮|胃痛|頭痛|生病/.test(text)) add("health");
+    if(/尊重|委屈|不被重視|不公平|覺得被/.test(text)) add("recognition / fairness");
     if(!tags.length) add("general");
 
     const d = new Date(ts);
     const when = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
     const progress = target ? Math.round((points/target)*100) : 0;
 
-    // simple sentiment (for framing only)
     let tone = "neutral";
     const neg = /爛|煩|氣|討厭|受不了|想離開|不行|崩|慘|焦慮|痛苦|hate|angry|tired|stressed/.test(text);
     const pos = /順利|完成|好|讚|感謝|學到|開心|ok|great|nice/.test(text);
     if(neg && !pos) tone = "negative";
     else if(pos && !neg) tone = "positive";
 
-    // choose primary theme with a priority that matches typical workplace journaling
-    const priority = [
-      "system / process",
-      "people / communication",
-      "workload / burnout",
-      "compensation",
-      "career growth",
-      "health",
-      "recognition / fairness",
-      "general"
-    ];
-    const primary = priority.find(t=>tags.includes(t)) || tags[0];
-
     const summary = (()=>{
-      if(primary === "system / process") return "核心偏向流程/制度變更造成重工或資訊落差，建議先把『變更點』記成可追蹤的流程問題。";
-      if(primary === "people / communication") return "事件核心偏向人際/溝通與邊界，建議把事實與情緒拆開記錄，方便後續對話。";
-      if(primary === "workload / burnout") return "近期壓力或工作量訊號偏高，建議用可控的小步驟降低耗損並保留緩衝。";
-      if(primary === "compensation") return "內容涉及報酬/待遇，建議同步整理市場區間與可談判條件。";
-      if(primary === "career growth") return "內容指向職涯發展落差，建議把『想要的下一步』具體化成職缺條件。";
-      if(primary === "health") return "內容涉及健康/睡眠，建議優先做減壓與休息安排。";
-      if(primary === "recognition / fairness") return "內容涉及被看見/公平感，建議把具體事件與你期待的標準寫清楚。";
+      if(tags.includes("workload / burnout")) return "近期壓力或工作量訊號偏高，建議用可控的小步驟降低耗損。";
+      if(tags.includes("people / communication")) return "事件核心偏向人際/溝通與邊界，建議把事實與情緒拆開記錄。";
+      if(tags.includes("compensation")) return "內容涉及報酬/待遇，建議同步整理市場區間與可談判條件。";
+      if(tags.includes("career growth")) return "內容指向職涯發展落差，建議把『想要的下一步』具體化成職缺條件。";
+      if(tags.includes("health")) return "內容涉及健康/睡眠，建議優先做減壓與休息安排。";
       return "這筆紀錄可作為趨勢追蹤的一部分，建議保持一致的記錄粒度。";
     })();
 
@@ -411,30 +380,13 @@
       const base = [];
       base.push(`進度：第 ${n} 點（${progress}%）｜日期：${when}`);
       if(tone==="negative") base.push("情緒強度偏高：建議補一行「我需要什麼」來對齊下一步。");
-
-      if(tags.includes("system / process")){
-        base.push("下一步：把『變更前/變更後』與造成重工的步驟寫成 3 行（方便下次直接引用）。");
-        base.push("下一步：建立簡單版本控管（例如報價版號/更新時間/通知對象），降低重工。");
-      }
-      if(tags.includes("people / communication")){
-        base.push("下一步：把對話用『事實/需求/界線』三句式改寫，便於後續溝通。");
-      }
-      if(tags.includes("workload / burnout")){
-        base.push("下一步：列出 1 個可刪減/可延後/可委派項目，並設定截止時間。");
-      }
-      if(tags.includes("compensation")){
-        base.push("下一步：把薪資與福利拆成 3 條可談項，並標記底線與期望值。");
-      }
-      if(tags.includes("career growth")){
-        base.push("下一步：寫下 3 個「下一份工作必備條件」，並開始蒐集對應職缺。");
-      }
-      if(tags.includes("health")){
-        base.push("下一步：安排 1 個可立刻做的恢復行為（睡眠、散步、補水）。");
-      }
-
+      if(tags.includes("workload / burnout")) base.push("下一步：列出 1 個可刪減/可委派項目，並設定截止時間。");
+      if(tags.includes("people / communication")) base.push("下一步：把對話用『事實/需求/界線』三句式改寫，便於後續溝通。");
+      if(tags.includes("compensation")) base.push("下一步：把薪資與福利拆成 3 條可談項，並標記底線。");
+      if(tags.includes("career growth")) base.push("下一步：寫下 3 個「下一份工作必備條件」。");
+      if(tags.includes("health")) base.push("下一步：安排 1 個可立刻做的恢復行為（睡眠、散步、補水）。");
       if(n >= (target-10)) base.push("倒數提醒：可開始更新履歷/作品集、建立職缺清單、準備交接。");
-      return base.join("
-");
+      return base.join("\n");
     })();
 
     return {tags, summary, advice};
