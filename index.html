@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Things will get better.</title>
+  <title>Goodbye tension, hello pension</title>
   <style>
     :root{
       --bg:#f2f2f2;
@@ -105,35 +105,6 @@
     .nav small{ color:var(--muted); font-size:11px; }
     .content{ min-width:0; }
 
-    /* top icons */
-    .topIcons{
-      display:flex;
-      gap:8px;
-      align-items:flex-start;
-    }
-    .iconBtn{
-      width:auto;
-      height:auto;
-      padding:4px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border:none;
-      background:transparent;
-      cursor:pointer;
-      font-size:18px;
-      line-height:1;
-      color:var(--text);
-    }
-    .iconBtn.ghost{
-      background:transparent;
-      color:var(--text);
-    }
-    .iconBtn.primary{
-      background:transparent;
-      color:var(--text);
-    }
-
     /* dashboard metrics */
     .dashGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
     .dashGrid2{ grid-template-columns: 1fr 1fr !important; }
@@ -162,8 +133,7 @@
     }
     .pcMeta{ text-align:right; font-size:11px; color:var(--muted); line-height:1.4; font-family:var(--mono); }
 
-    /* desktop 10 per row */
-    .circleGrid{ display:grid; grid-template-columns: repeat(10, 1fr); gap:10px; margin-top:10px; }
+    .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
     .circleWrap{ position:relative; }
     .circle{
       aspect-ratio:1/1; border-radius:999px; border:1px solid rgba(0,0,0,.12);
@@ -225,6 +195,12 @@
     .modal .foot{padding:12px 14px; border-top:1px solid var(--line); display:flex; gap:10px; justify-content:flex-end;}
 
     @media (max-width: 980px){
+      .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
+      .twoCol{ grid-template-columns: 1fr; }
+      .shell{ display:block; }}
+
+    @media (max-width: 980px){
+      .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
       .twoCol{ grid-template-columns: 1fr; }
       .shell{ display:block; }
     }
@@ -232,31 +208,23 @@
     @media (max-width: 768px){
       body{ font-size:14px; }
       .container{ padding:16px 12px 32px; }
-      .topbar{
-        display:grid;
-        grid-template-columns: 1fr auto;
-        align-items:start;
-        gap:10px;
-      }
-      .topLeft{
-        width:100%;
-        align-items:flex-start;
-        min-width:0;
-      }
+      .topbar{ flex-direction:column; align-items:stretch; gap:10px; }
+      .topLeft{ width:100%; align-items:flex-start; }
       .brand{
         white-space:normal;
         overflow:visible;
         text-overflow:unset;
         line-height:1.35;
       }
-      .topIcons{
-        justify-content:flex-end;
-        align-items:flex-start;
-        padding-top:2px;
+      .topbar > div:last-child{
+        width:100%;
+        display:grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap:8px;
       }
-      .iconBtn{
-        font-size:18px;
-        padding:2px;
+      .topbar > div:last-child .btn{
+        width:100% !important;
+        padding:11px 12px;
       }
       .panel{ padding:14px; }
       .dashGrid,
@@ -269,8 +237,7 @@
       .pcShell{ padding:14px; }
       .pcHead{ flex-direction:column; align-items:flex-start; gap:8px; }
       .pcMeta{ text-align:left; }
-      /* mobile 5 per row */
-      .circleGrid{ grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
+      .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
       .circle{ font-size:10px; }
       .pcFoot{ flex-direction:column; align-items:flex-start; gap:10px; }
       .pager{ width:100%; justify-content:space-between; }
@@ -278,13 +245,6 @@
       .modal{ width:100%; }
       .modal .body{ max-height:70vh; overflow:auto; }
       #history .log{ padding:10px; }
-
-      /* AI insights mobile: stack vertically */
-      #insightsSection > div[style*="grid-template-columns: 1fr 1fr"]{
-        display:grid !important;
-        grid-template-columns: 1fr !important;
-        gap:10px !important;
-      }
     }
 
     @media (max-width: 480px){
@@ -292,12 +252,12 @@
       .panel{ padding:12px; }
       .card{ padding:22px 18px; }
       .title h1{ font-size:20px; }
-      /* keep mobile 5 per row */
-      .circleGrid{ grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
+      .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
       .metric .v{ font-size:20px; }
       .hint{ font-size:11px; }
     }
-  </style>
+
+</style>
 </head>
 <body>
   <div id="root"></div>
@@ -327,14 +287,14 @@
     points: "gthp_points_v13",
     logs: "gthp_logs_v13",
     session: "gthp_session_v13",
-    settings: "gthp_settings_v13"
+    settings: "gthp_settings_v13" // {target, page, startDate, drawerCollapsed}
   };
 
   const TARGET_DEFAULT = 66;
   const PAGE_SIZE = 20;
 
   const $ = (s, el)=> (el || document).querySelector(s);
-  function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventListener(ev,fn);}
+function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventListener(ev,fn);}
 
   function load(k, f){
     try{
@@ -361,11 +321,12 @@
   const state = {
     user: load(K.user, null),
     points: Number(load(K.points, 0)) || 0,
-    logs: load(K.logs, []),
+    logs: load(K.logs, []), // [{id, ts, note}]
     session: load(K.session, {unlockedUntil:0}),
     settings: load(K.settings, {target: TARGET_DEFAULT, page: 0, startDate: "", drawerCollapsed:false}),
   };
 
+  // UI helpers
   let toastTimer=null;
   function toast(t,m){
     $("#toastT").textContent=t;
@@ -390,21 +351,24 @@
   on("mClose","click", closeModal);
   on("backdrop","click", (e)=>{ if(e.target === $("#backdrop")) closeModal(); });
 
+  // session
   function isUnlocked(){ return Date.now() < (state.session?.unlockedUntil || 0); }
   function lock(){ state.session.unlockedUntil = 0; save(K.session, state.session); }
   function unlock(minutes=30){ state.session.unlockedUntil = Date.now() + minutes*60*1000; save(K.session, state.session); }
 
+  // routing
   function route(){
     const h = location.hash || "#/login";
     if(h.startsWith("#/reset")) return {page:"reset"};
     if(h.startsWith("#/app")){
-      const parts = h.replace("#/","").split("/");
+      const parts = h.replace("#/","").split("/"); // app/sub
       const sub = (parts[1] || "dashboard").split("?")[0];
       return {page:"app", sub};
     }
     return {page:"login"};
   }
 
+  // format
   const pad2 = n => String(n).padStart(2,"0");
   function fmt(ts){
     const d = new Date(ts);
@@ -420,6 +384,7 @@
     return Math.max(20, Math.min(365, Math.floor(n)));
   }
 
+  // tenure -> recommended points (heuristic)
   function recommendedPointsFromStart(startISO){
     if(!startISO) return {target: TARGET_DEFAULT, tier:"", tenureMonths: 0};
     const start = new Date(startISO + "T00:00:00");
@@ -438,144 +403,44 @@
     return {target, tier, tenureMonths: months};
   }
 
-  
+  // "AI analysis" (local heuristic, no network)
   function aiAnalyze(note, ts, n, points, target){
   const text = (note || "").toLowerCase();
 
   let core = "需要釐清問題";
-  if(/沒講|突然/.test(text)) core = "變動未通知導致問題";
-  else if(/累|壓力/.test(text)) core = "負荷過高";
-  else if(/同事|主管/.test(text)) core = "溝通問題";
+  if(/沒講|突然/.test(text)) core = "變動未通知導致重工";
+  else if(/累|壓力/.test(text)) core = "工作負荷過高";
+  else if(/同事|主管/.test(text)) core = "溝通或協作問題";
 
   let risk = "低";
   if(/累|壓力/.test(text)) risk = "中";
   if(/失眠|焦慮/.test(text)) risk = "高";
 
-  let level = risk==="高"?"高優先":risk==="中"?"中優先":"可觀察";
+  let level = "可觀察";
+  if(risk==="中") level="中優先";
+  if(risk==="高") level="高優先";
 
-  const action = [
-    "釐清事件原因",
-    "建立改善方式"
-  ].join("
-");
+  const action = "1.釐清原因
+2.提出改善
+3.避免重複";
 
   return { core, risk, level, action, tags:["auto"] };
-};
+})();
 
-    // tagging priority
-    if(has.process || has.redo || (has.sudden && has.noNotice)) add("system / process");
-    if(has.people || has.noNotice) add("people / communication");
-    if(has.overload || has.redo) add("workload / burnout");
-    if(has.compensation) add("compensation");
-    if(has.growth) add("career growth");
-    if(has.health) add("health");
-    if(has.unfair) add("recognition / fairness");
-    if(!tags.length) add("general");
+    const advice = (()=>{
+      const base = [];
+      base.push(`進度：第 ${n} 點（${progress}%）｜日期：${when}`);
+      if(tone==="negative") base.push("情緒強度偏高：建議補一行「我需要什麼」來對齊下一步。");
+      if(tags.includes("workload / burnout")) base.push("下一步：列出 1 個可刪減/可委派項目，並設定截止時間。");
+      if(tags.includes("people / communication")) base.push("下一步：把對話用『事實/需求/界線』三句式改寫，便於後續溝通。");
+      if(tags.includes("compensation")) base.push("下一步：把薪資與福利拆成 3 條可談項，並標記底線。");
+      if(tags.includes("career growth")) base.push("下一步：寫下 3 個「下一份工作必備條件」。");
+      if(tags.includes("health")) base.push("下一步：安排 1 個可立刻做的恢復行為（睡眠、散步、補水）。");
+      if(n >= (target-10)) base.push("倒數提醒：可開始更新履歷/作品集、建立職缺清單、準備交接。");
+      return base.join("\n");
+    })();
 
-    const d = new Date(ts);
-    const when = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-    const progress = target ? Math.round((points/target)*100) : 0;
-
-    // Core problem: infer the underlying issue, not just repeat the tag
-    let core = "事件需要再拆解成更具體的問題。";
-
-    if((has.process || has.redo || has.sudden) && has.noNotice){
-      core = "決策或流程變動缺乏提前通知，導致執行端重工。";
-    }else if(has.process && has.redo){
-      core = "流程設計不穩定，造成反覆修改與時間浪費。";
-    }else if(has.people && has.noNotice){
-      core = "資訊傳遞不完整，讓協作出現落差。";
-    }else if(has.overload && has.redo){
-      core = "工作量與重工同時發生，正在放大耗損。";
-    }else if(has.compensation){
-      core = "付出與報酬之間存在落差或不確定性。";
-    }else if(has.growth){
-      core = "目前角色無法支撐你期待的職涯發展。";
-    }else if(has.health){
-      core = "工作已開始影響身心恢復與日常狀態。";
-    }else if(has.unfair){
-      core = "公平感與被看見程度不足，容易累積委屈。";
-    }else if(tags.includes("people / communication")){
-      core = "協作與溝通方式需要被重新定義。";
-    }else if(tags.includes("system / process")){
-      core = "流程或制度本身是主要阻力來源。";
-    }else if(tags.includes("workload / burnout")){
-      core = "目前承載量已接近或超過可持續範圍。";
-    }
-
-    // Risk judgment
-    let risk = "風險偏低，建議持續觀察。";
-    if(has.health){
-      risk = "身心狀態已受影響，若持續發生，恢復力與判斷力都會下降。";
-    }else if(has.overload && has.redo){
-      risk = "重工與高負荷同時出現，容易快速累積疲勞與離職傾向。";
-    }else if((has.sudden || has.process) && has.noNotice){
-      risk = "如果變動沒有被同步，後續仍可能重複發生相同問題。";
-    }else if(has.people && has.unfair){
-      risk = "若邊界與責任不清，容易持續累積不信任。";
-    }else if(has.compensation){
-      risk = "若長期看不到對等回報，投入感會逐步下降。";
-    }else if(has.growth){
-      risk = "若長期停滯，會提高轉職意願。";
-    }else if(has.negative){
-      risk = "情緒壓力正在累積，若沒有出口，事件感受會被放大。";
-    }
-
-    // Recommended actions
-    const actions = [];
-    actions.push(`進度：第 ${n} 點（${progress}%）｜日期：${when}`);
-
-    if((has.process || has.redo) && has.noNotice){
-      actions.push("建議行動：把「變更前 / 變更後 / 哪一步開始重工」寫成 3 行，保留成下次可直接引用的紀錄。");
-      actions.push("建議行動：建立簡單的更新通知方式，例如版號、時間、通知對象。");
-    }else if(has.process && has.redo){
-      actions.push("建議行動：先找出最常被改的環節，優先固定那一段流程。");
-    }
-
-    if(has.people || has.noNotice){
-      actions.push("建議行動：把事件改寫成『事實 / 影響 / 需求』三句，方便之後溝通。");
-    }
-    if(has.overload){
-      actions.push("建議行動：找 1 件可延後、簡化或委派的事，先減少當下耗損。");
-    }
-    if(has.compensation){
-      actions.push("建議行動：整理薪資、福利與市場區間，再決定要不要談。");
-    }
-    if(has.growth){
-      actions.push("建議行動：列出下一份工作 3 個必備條件，開始當成篩選標準。");
-    }
-    if(has.health){
-      actions.push("建議行動：先安排一個可立即做到的恢復行為，例如補眠、散步、補水。");
-    }
-    if(has.unfair){
-      actions.push("建議行動：記下具體事件與你的期待標準，避免只剩模糊委屈。");
-    }
-
-    // overall decision signal
-    let level = "可觀察";
-    if(has.health || (has.overload && has.redo) || ((has.sudden || has.process) && has.noNotice && has.negative)){
-      level = "高優先處理";
-    }else if(has.compensation || has.growth || has.unfair){
-      level = "中優先處理";
-    }
-
-    if(n >= (target-10)){
-      actions.push("倒數提醒：可以開始更新履歷 / 作品集、建立職缺清單、準備交接。");
-    }
-
-    const summary = `判定：${level}｜${core}`;
-    const advice = actions.join("
-");
-
-    return {
-      tags,
-      summary,
-      advice,
-      core,
-      risk,
-      action: advice,
-      level
-    };
+    return {tags, summary, advice};
   }
 
   function loginView(){
@@ -583,7 +448,7 @@
       <div class="center">
         <div class="card">
           <div class="title">
-            <h1>Things will get better.</h1>
+            <h1>Goodbye tension,<br>hello pension</h1>
             <div class="subtitle">Sign in</div>
           </div>
 
@@ -652,6 +517,8 @@
     return {token: p.get("token")||"", email: p.get("email")||""};
   }
 
+  
+  
   function dashboardView(){
     const target = clampTarget(state.settings.target);
     const remain = Math.max(0, target - state.points);
@@ -662,6 +529,7 @@
     const negCount = recent14.filter(l=>/爛|煩|氣|討厭|受不了|想離開|不行|崩|慘|焦慮|痛苦|hate|angry|tired|stressed|壓力|崩潰|burnout|累|失眠|胃痛|頭痛/.test((l.note||"").toLowerCase())).length;
     const burnout = Math.max(0, Math.min(100, Math.round(progress*0.55 + (recent14.length? (negCount/recent14.length)*100*0.45 : 0))));
 
+    // insights buckets (last 30 logs)
     const recent30 = logs.slice(0,30);
     const buckets = {work:0, people:0, pay:0, health:0, growth:0, other:0};
     recent30.forEach(l=>{
@@ -718,22 +586,11 @@
               ${row("Other", buckets.other)}
             </div>
             <div class="log" style="margin:0;">
-              <div class="t">Latest snapshot · structured insight</div>
+              <div class="t">Latest snapshot (AI)</div>
               ${latest ? `
-                <div style="white-space:pre-wrap; line-height:1.6;"><strong>判定等級</strong>
-${escapeHTML(snap.level)}
+                <div style="white-space:pre-wrap; line-height:1.5;">${escapeHTML(snap.summary)}
 
-<strong>核心問題</strong>
-${escapeHTML(snap.core)}
-
-<strong>風險</strong>
-${escapeHTML(snap.risk)}
-
-<strong>建議行動</strong>
-${escapeHTML(snap.action)}
-
-Tags: ${escapeHTML(snap.tags.join(", "))}
-</div>
+Tags: ${escapeHTML(snap.tags.join(", "))}</div>
               ` : `<div class="hint" style="text-align:left;margin:0;">No logs yet.</div>`}
             </div>
           </div>
@@ -741,6 +598,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
       </div>
     `;
   }
+
 
   function pointsView(){
     const target = clampTarget(state.settings.target);
@@ -828,6 +686,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
     `;
   }
 
+  
   function appShellView(sub){
     const target = clampTarget(state.settings.target);
     const remain = Math.max(0, target - state.points);
@@ -852,13 +711,13 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
           <div class="topLeft">
             <button class="hamburger" id="btnDrawer">${sub==="points" ? "Dashboard" : "Point card"}</button>
             <div style="min-width:0;">
-              <div class="brand">Things will get better.</div>
+              <div class="brand">Goodbye tension, hello pension</div>
               <div class="kpi">Sign out · ${state.points}/${target} · remaining ${remain}</div>
             </div>
           </div>
-          <div class="topIcons">
-            <button class="iconBtn ghost" id="btnSettings" aria-label="Settings" title="Settings">⚙</button>
-            <button class="iconBtn primary" id="btnSignout" aria-label="Sign out" title="Sign out">↗</button>
+          <div style="display:flex; gap:10px;">
+            <button class="btn ghost" style="width:auto" id="btnSettings">Settings</button>
+            <button class="btn primary" style="width:auto" id="btnSignout">Sign out</button>
           </div>
         </div>
 
@@ -904,6 +763,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
         return;
       }
 
+      // First-time setup
       if(!state.user){
         openModal(
           "Set recovery email",
@@ -946,6 +806,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
         return;
       }
 
+      // normal login
       if(username !== state.user.username){
         toast("Wrong login", "Username mismatch.");
         return;
@@ -1123,6 +984,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
     });
   }
 
+  
   function bindAppShell(sub){
     const drawer = document.getElementById("drawer");
     const overlay = document.getElementById("drawerOverlay");
@@ -1133,6 +995,12 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
       drawer.setAttribute("aria-hidden","true");
       overlay.setAttribute("aria-hidden","true");
     };
+    const openDrawer = ()=>{
+      drawer.classList.add("show");
+      overlay.classList.add("show");
+      drawer.setAttribute("aria-hidden","false");
+      overlay.setAttribute("aria-hidden","false");
+    };
 
     on("btnDrawer","click", ()=>{
       if(sub === "points") location.hash = "#/app/dashboard";
@@ -1140,6 +1008,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
     });
     overlay.addEventListener("click", closeDrawer);
 
+    // sign out
     on("btnSignout","click", ()=>{
       lock();
       toast("Signed out", "");
@@ -1147,6 +1016,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
       render();
     });
 
+    // settings modal (global)
     on("btnSettings","click", ()=>{
       const startDate = state.settings.startDate || "";
       const rec = recommendedPointsFromStart(startDate);
@@ -1206,6 +1076,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
       };
     });
 
+    // dashboard click-through
     if(sub === "dashboard"){
       const goPoints = ()=>{ location.hash = "#/app/points"; };
       const bindCard = (id, fn)=>{
@@ -1224,6 +1095,7 @@ Tags: ${escapeHTML(snap.tags.join(", "))}
 
     if(sub !== "points") return;
 
+    // points bindings
     const target = clampTarget(state.settings.target);
     const pageCount = Math.max(1, Math.ceil(target / PAGE_SIZE));
     const page = Math.min(pageCount-1, Math.max(0, state.settings.page || 0));
@@ -1318,6 +1190,8 @@ ${analysis.advice}</textarea>
       });
     });
   }
+
+  // boot
 
   window.addEventListener("hashchange", render);
 
