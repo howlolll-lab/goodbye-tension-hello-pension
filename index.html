@@ -439,59 +439,137 @@
   }
 
   function aiAnalyze(note, ts, n, points, target){
-    const text = (note || "").toLowerCase();
+    const text = (note || "").toLowerCase().trim();
     const tags = [];
     const add = (t)=>{ if(!tags.includes(t)) tags.push(t); };
 
-    if(/加班|超時|爆量|忙|趕|壓力|崩潰|burnout|疲|累|身心/.test(text)) add("workload / burnout");
-    if(/同事|主管|老闆|老闆娘|團隊|溝通|情緒勒索|人際|politics/.test(text)) add("people / communication");
-    if(/薪|薪水|加薪|年終|獎金|待遇|錢|報價|cost|compensation/.test(text)) add("compensation");
-    if(/制度|流程|規則|管理|okr|kpi/.test(text)) add("system / process");
-    if(/成長|學習|學不到|沒發展|職涯|career|轉職/.test(text)) add("career growth");
-    if(/健康|睡眠|失眠|焦慮|胃痛|頭痛|生病/.test(text)) add("health");
-    if(/尊重|委屈|不被重視|不公平|覺得被/.test(text)) add("recognition / fairness");
+    const has = {
+      sudden: /突然|臨時|忽然|急改|改來改去/.test(text),
+      noNotice: /沒講|沒提前講|沒通知|未告知|資訊沒同步|不講|不說/.test(text),
+      redo: /重做|重工|返工|重跑|重新|做表|改表|重算/.test(text),
+      process: /流程|制度|規則|管理|sop|版本|變更|改方式|改規格|改需求|改單|報價|對帳|核銷|請款|交接|表單|格式|欄位/.test(text),
+      people: /同事|主管|老闆|老闆娘|團隊|溝通|人際|情緒勒索|推來推去|踢皮球/.test(text),
+      overload: /加班|超時|爆量|忙|趕|壓力|崩潰|burnout|疲|累|撐不住|整天|整個下午|一直做/.test(text),
+      compensation: /薪水|加薪|年終|獎金|待遇|福利|調薪|底薪|bonus|raise|compensation/.test(text),
+      growth: /成長|學習|學不到|沒發展|職涯|career|轉職|升遷|前景|技能|履歷|作品集/.test(text),
+      health: /健康|睡眠|失眠|焦慮|胃痛|頭痛|生病|心悸|胸悶|看醫生|藥/.test(text),
+      unfair: /尊重|委屈|不被重視|不公平|背鍋|被當|被看不起|功勞/.test(text),
+      negative: /爛|煩|氣|討厭|受不了|想離開|不行|崩|慘|焦慮|痛苦|hate|angry|tired|stressed/.test(text)
+    };
+
+    // Tagging
+    if(has.process || has.redo || (has.sudden && has.noNotice)) add("system / process");
+    if(has.people || has.noNotice) add("people / communication");
+    if(has.overload || has.redo) add("workload / burnout");
+    if(has.compensation) add("compensation");
+    if(has.growth) add("career growth");
+    if(has.health) add("health");
+    if(has.unfair) add("recognition / fairness");
     if(!tags.length) add("general");
 
     const d = new Date(ts);
     const when = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
     const progress = target ? Math.round((points/target)*100) : 0;
 
-    let tone = "neutral";
-    const neg = /爛|煩|氣|討厭|受不了|想離開|不行|崩|慘|焦慮|痛苦|hate|angry|tired|stressed/.test(text);
-    const pos = /順利|完成|好|讚|感謝|學到|開心|ok|great|nice/.test(text);
-    if(neg && !pos) tone = "negative";
-    else if(pos && !neg) tone = "positive";
+    // Core problem = infer the underlying issue, not just repeat the tag
+    let core = "事件需要再拆解成更具體的問題。";
+    if((has.process || has.redo || has.sudden) && has.noNotice){
+      core = "決策或流程變動缺乏提前通知，導致執行端重工。";
+    }else if(has.process && has.redo){
+      core = "流程設計不穩定，造成反覆修改與時間浪費。";
+    }else if(has.people && has.noNotice){
+      core = "資訊傳遞不完整，讓協作出現落差。";
+    }else if(has.overload && has.redo){
+      core = "工作量與重工同時發生，正在放大耗損。";
+    }else if(has.compensation){
+      core = "付出與報酬之間存在落差或不確定性。";
+    }else if(has.growth){
+      core = "目前角色無法支撐你期待的職涯發展。";
+    }else if(has.health){
+      core = "工作已開始影響身心恢復與日常狀態。";
+    }else if(has.unfair){
+      core = "公平感與被看見程度不足，容易累積委屈。";
+    }else if(tags.includes("people / communication")){
+      core = "協作與溝通方式需要被重新定義。";
+    }else if(tags.includes("system / process")){
+      core = "流程或制度本身是主要阻力來源。";
+    }else if(tags.includes("workload / burnout")){
+      core = "目前承載量已接近或超過可持續範圍。";
+    }
 
-    const summary = (()=>{
-      if(tags.includes("workload / burnout")) return "近期壓力或工作量訊號偏高，建議用可控的小步驟降低耗損。";
-      if(tags.includes("people / communication")) return "事件核心偏向人際/溝通與邊界，建議把事實與情緒拆開記錄。";
-      if(tags.includes("compensation")) return "內容涉及報酬/待遇，建議同步整理市場區間與可談判條件。";
-      if(tags.includes("career growth")) return "內容指向職涯發展落差，建議把『想要的下一步』具體化成職缺條件。";
-      if(tags.includes("health")) return "內容涉及健康/睡眠，建議優先做減壓與休息安排。";
-      return "這筆紀錄可作為趨勢追蹤的一部分，建議保持一致的記錄粒度。";
-    })();
+    // Risk
+    let risk = "風險偏低，建議持續觀察。";
+    if(has.health){
+      risk = "身心狀態已受影響，若持續發生，恢復力與判斷力都會下降。";
+    }else if(has.overload && has.redo){
+      risk = "重工與高負荷同時出現，容易快速累積疲勞與離職傾向。";
+    }else if((has.sudden || has.process) && has.noNotice){
+      risk = "如果變動沒有被同步，後續仍可能重複發生相同問題。";
+    }else if(has.people && has.unfair){
+      risk = "若邊界與責任不清，容易持續累積不信任。";
+    }else if(has.compensation){
+      risk = "若長期看不到對等回報，投入感會逐步下降。";
+    }else if(has.growth){
+      risk = "若長期停滯，會提高轉職意願。";
+    }else if(has.negative){
+      risk = "情緒壓力正在累積，若沒有出口，事件感受會被放大。";
+    }
 
-    const advice = (()=>{
-      const base = [];
-      base.push(`進度：第 ${n} 點（${progress}%）｜日期：${when}`);
-      if(tone==="negative") base.push("情緒強度偏高：建議補一行「我需要什麼」來對齊下一步。");
-      if(tags.includes("workload / burnout")) base.push("下一步：列出 1 個可刪減/可委派項目，並設定截止時間。");
-      if(tags.includes("people / communication")) base.push("下一步：把對話用『事實/需求/界線』三句式改寫，便於後續溝通。");
-      if(tags.includes("compensation")) base.push("下一步：把薪資與福利拆成 3 條可談項，並標記底線。");
-      if(tags.includes("career growth")) base.push("下一步：寫下 3 個「下一份工作必備條件」。");
-      if(tags.includes("health")) base.push("下一步：安排 1 個可立刻做的恢復行為（睡眠、散步、補水）。");
-      if(n >= (target-10)) base.push("倒數提醒：可開始更新履歷/作品集、建立職缺清單、準備交接。");
-      return base.join("\\n");
-    })();
+    // Decision level
+    let level = "可觀察";
+    if(has.health || (has.overload && has.redo) || ((has.sudden || has.process) && has.noNotice && has.negative)){
+      level = "高優先處理";
+    }else if(has.compensation || has.growth || has.unfair || has.overload || has.people){
+      level = "中優先處理";
+    }
 
-    const core = summary;
-    const risk = tone==="negative"
-      ? "情緒與壓力持續累積，可能影響判斷與身心狀態。"
-      : "風險偏低，但仍建議持續觀察變化。";
+    // Recommended actions by category
+    const actions = [];
+    actions.push(`進度：第 ${n} 點（${progress}%）｜日期：${when}`);
 
-    const action = advice;
+    if((has.process || has.redo) && has.noNotice){
+      actions.push("建議行動：把「變更前 / 變更後 / 哪一步開始重工」寫成 3 行，保留成下次可直接引用的紀錄。");
+      actions.push("建議行動：建立簡單的更新通知方式，例如版號、時間、通知對象。");
+    }else if(has.process && has.redo){
+      actions.push("建議行動：先找出最常被改的環節，優先固定那一段流程。");
+    }else if(tags.includes("system / process")){
+      actions.push("建議行動：把流程中的關鍵步驟與責任人寫清楚，避免重複出錯。");
+    }
 
-    return {tags, summary, advice, core, risk, action};
+    if(has.people || has.noNotice){
+      actions.push("建議行動：把事件改寫成『事實 / 影響 / 需求』三句，方便之後溝通。");
+    }
+    if(has.overload){
+      actions.push("建議行動：找 1 件可延後、簡化或委派的事，先減少當下耗損。");
+    }
+    if(has.compensation){
+      actions.push("建議行動：整理薪資、福利與市場區間，再決定要不要談。");
+    }
+    if(has.growth){
+      actions.push("建議行動：列出下一份工作 3 個必備條件，開始當成篩選標準。");
+    }
+    if(has.health){
+      actions.push("建議行動：先安排一個可立即做到的恢復行為，例如補眠、散步、補水。");
+    }
+    if(has.unfair){
+      actions.push("建議行動：記下具體事件與你的期待標準，避免只剩模糊委屈。");
+    }
+    if(n >= (target-10)){
+      actions.push("倒數提醒：可以開始更新履歷 / 作品集、建立職缺清單、準備交接。");
+    }
+
+    const summary = `判定：${level}｜${core}`;
+    const advice = actions.join("\n");
+
+    return {
+      tags,
+      summary,
+      advice,
+      core,
+      risk,
+      action: advice,
+      level
+    };
   }
 
   function loginView(){
@@ -634,9 +712,11 @@
               ${row("Other", buckets.other)}
             </div>
             <div class="log" style="margin:0;">
-              <div class="t">Latest snapshot · summary + advice</div>
+              <div class="t">Latest snapshot · structured insight</div>
               ${latest ? `
-                <div style="white-space:pre-wrap; line-height:1.5;">
+                <div style="white-space:pre-wrap; line-height:1.6;"><strong>判定等級</strong>
+${escapeHTML(snap.level)}
+
 <strong>核心問題</strong>
 ${escapeHTML(snap.core)}
 
