@@ -484,7 +484,14 @@
       return base.join("\\n");
     })();
 
-    return {tags, summary, advice};
+    const core = summary;
+    const risk = tone==="negative"
+      ? "情緒與壓力持續累積，可能影響判斷與身心狀態。"
+      : "風險偏低，但仍建議持續觀察變化。";
+
+    const action = advice;
+
+    return {tags, summary, advice, core, risk, action};
   }
 
   function loginView(){
@@ -629,11 +636,18 @@
             <div class="log" style="margin:0;">
               <div class="t">Latest snapshot · summary + advice</div>
               ${latest ? `
-                <div style="white-space:pre-wrap; line-height:1.5;">${escapeHTML(snap.summary)}
+                <div style="white-space:pre-wrap; line-height:1.5;">
+<strong>核心問題</strong>
+${escapeHTML(snap.core)}
+
+<strong>風險</strong>
+${escapeHTML(snap.risk)}
+
+<strong>建議行動</strong>
+${escapeHTML(snap.action)}
 
 Tags: ${escapeHTML(snap.tags.join(", "))}
-
-${escapeHTML(snap.advice)}</div>
+</div>
               ` : `<div class="hint" style="text-align:left;margin:0;">No logs yet.</div>`}
             </div>
           </div>
