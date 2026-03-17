@@ -109,30 +109,29 @@
     .topIcons{
       display:flex;
       gap:8px;
-      align-items:center;
+      align-items:flex-start;
     }
     .iconBtn{
-      width:40px;
-      height:40px;
-      padding:0;
+      width:auto;
+      height:auto;
+      padding:4px;
       display:flex;
       align-items:center;
       justify-content:center;
-      border-radius:999px;
-      border:1px solid var(--btnLine);
-      background:#fff;
+      border:none;
+      background:transparent;
       cursor:pointer;
-      font-size:16px;
+      font-size:18px;
       line-height:1;
+      color:var(--text);
     }
     .iconBtn.ghost{
-      background:#fff;
+      background:transparent;
       color:var(--text);
     }
     .iconBtn.primary{
-      background:var(--btn);
-      color:#fff;
-      border-color:var(--btn);
+      background:transparent;
+      color:var(--text);
     }
 
     /* dashboard metrics */
@@ -233,8 +232,17 @@
     @media (max-width: 768px){
       body{ font-size:14px; }
       .container{ padding:16px 12px 32px; }
-      .topbar{ flex-direction:column; align-items:stretch; gap:10px; }
-      .topLeft{ width:100%; align-items:flex-start; }
+      .topbar{
+        display:grid;
+        grid-template-columns: 1fr auto;
+        align-items:start;
+        gap:10px;
+      }
+      .topLeft{
+        width:100%;
+        align-items:flex-start;
+        min-width:0;
+      }
       .brand{
         white-space:normal;
         overflow:visible;
@@ -242,12 +250,13 @@
         line-height:1.35;
       }
       .topIcons{
-        width:100%;
         justify-content:flex-end;
+        align-items:flex-start;
+        padding-top:2px;
       }
       .iconBtn{
-        width:38px;
-        height:38px;
+        font-size:18px;
+        padding:2px;
       }
       .panel{ padding:14px; }
       .dashGrid,
@@ -269,6 +278,13 @@
       .modal{ width:100%; }
       .modal .body{ max-height:70vh; overflow:auto; }
       #history .log{ padding:10px; }
+
+      /* AI insights mobile: stack vertically */
+      #insightsSection > div[style*="grid-template-columns: 1fr 1fr"]{
+        display:grid !important;
+        grid-template-columns: 1fr !important;
+        gap:10px !important;
+      }
     }
 
     @media (max-width: 480px){
