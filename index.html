@@ -105,6 +105,36 @@
     .nav small{ color:var(--muted); font-size:11px; }
     .content{ min-width:0; }
 
+    /* top icons */
+    .topIcons{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .iconBtn{
+      width:40px;
+      height:40px;
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:999px;
+      border:1px solid var(--btnLine);
+      background:#fff;
+      cursor:pointer;
+      font-size:16px;
+      line-height:1;
+    }
+    .iconBtn.ghost{
+      background:#fff;
+      color:var(--text);
+    }
+    .iconBtn.primary{
+      background:var(--btn);
+      color:#fff;
+      border-color:var(--btn);
+    }
+
     /* dashboard metrics */
     .dashGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
     .dashGrid2{ grid-template-columns: 1fr 1fr !important; }
@@ -133,7 +163,8 @@
     }
     .pcMeta{ text-align:right; font-size:11px; color:var(--muted); line-height:1.4; font-family:var(--mono); }
 
-    .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
+    /* desktop 10 per row */
+    .circleGrid{ display:grid; grid-template-columns: repeat(10, 1fr); gap:10px; margin-top:10px; }
     .circleWrap{ position:relative; }
     .circle{
       aspect-ratio:1/1; border-radius:999px; border:1px solid rgba(0,0,0,.12);
@@ -195,12 +226,6 @@
     .modal .foot{padding:12px 14px; border-top:1px solid var(--line); display:flex; gap:10px; justify-content:flex-end;}
 
     @media (max-width: 980px){
-      .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
-      .twoCol{ grid-template-columns: 1fr; }
-      .shell{ display:block; }}
-
-    @media (max-width: 980px){
-      .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
       .twoCol{ grid-template-columns: 1fr; }
       .shell{ display:block; }
     }
@@ -216,15 +241,13 @@
         text-overflow:unset;
         line-height:1.35;
       }
-      .topbar > div:last-child{
+      .topIcons{
         width:100%;
-        display:grid !important;
-        grid-template-columns: 1fr 1fr;
-        gap:8px;
+        justify-content:flex-end;
       }
-      .topbar > div:last-child .btn{
-        width:100% !important;
-        padding:11px 12px;
+      .iconBtn{
+        width:38px;
+        height:38px;
       }
       .panel{ padding:14px; }
       .dashGrid,
@@ -237,7 +260,8 @@
       .pcShell{ padding:14px; }
       .pcHead{ flex-direction:column; align-items:flex-start; gap:8px; }
       .pcMeta{ text-align:left; }
-      .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
+      /* mobile 5 per row */
+      .circleGrid{ grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
       .circle{ font-size:10px; }
       .pcFoot{ flex-direction:column; align-items:flex-start; gap:10px; }
       .pager{ width:100%; justify-content:space-between; }
@@ -252,12 +276,12 @@
       .panel{ padding:12px; }
       .card{ padding:22px 18px; }
       .title h1{ font-size:20px; }
-      .circleGrid{ display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
+      /* keep mobile 5 per row */
+      .circleGrid{ grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:10px; }
       .metric .v{ font-size:20px; }
       .hint{ font-size:11px; }
     }
-
-</style>
+  </style>
 </head>
 <body>
   <div id="root"></div>
@@ -287,14 +311,14 @@
     points: "gthp_points_v13",
     logs: "gthp_logs_v13",
     session: "gthp_session_v13",
-    settings: "gthp_settings_v13" // {target, page, startDate, drawerCollapsed}
+    settings: "gthp_settings_v13"
   };
 
   const TARGET_DEFAULT = 66;
   const PAGE_SIZE = 20;
 
   const $ = (s, el)=> (el || document).querySelector(s);
-function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventListener(ev,fn);}
+  function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventListener(ev,fn);}
 
   function load(k, f){
     try{
@@ -321,12 +345,11 @@ function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventLi
   const state = {
     user: load(K.user, null),
     points: Number(load(K.points, 0)) || 0,
-    logs: load(K.logs, []), // [{id, ts, note}]
+    logs: load(K.logs, []),
     session: load(K.session, {unlockedUntil:0}),
     settings: load(K.settings, {target: TARGET_DEFAULT, page: 0, startDate: "", drawerCollapsed:false}),
   };
 
-  // UI helpers
   let toastTimer=null;
   function toast(t,m){
     $("#toastT").textContent=t;
@@ -351,24 +374,21 @@ function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventLi
   on("mClose","click", closeModal);
   on("backdrop","click", (e)=>{ if(e.target === $("#backdrop")) closeModal(); });
 
-  // session
   function isUnlocked(){ return Date.now() < (state.session?.unlockedUntil || 0); }
   function lock(){ state.session.unlockedUntil = 0; save(K.session, state.session); }
   function unlock(minutes=30){ state.session.unlockedUntil = Date.now() + minutes*60*1000; save(K.session, state.session); }
 
-  // routing
   function route(){
     const h = location.hash || "#/login";
     if(h.startsWith("#/reset")) return {page:"reset"};
     if(h.startsWith("#/app")){
-      const parts = h.replace("#/","").split("/"); // app/sub
+      const parts = h.replace("#/","").split("/");
       const sub = (parts[1] || "dashboard").split("?")[0];
       return {page:"app", sub};
     }
     return {page:"login"};
   }
 
-  // format
   const pad2 = n => String(n).padStart(2,"0");
   function fmt(ts){
     const d = new Date(ts);
@@ -384,7 +404,6 @@ function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventLi
     return Math.max(20, Math.min(365, Math.floor(n)));
   }
 
-  // tenure -> recommended points (heuristic)
   function recommendedPointsFromStart(startISO){
     if(!startISO) return {target: TARGET_DEFAULT, tier:"", tenureMonths: 0};
     const start = new Date(startISO + "T00:00:00");
@@ -403,7 +422,6 @@ function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventLi
     return {target, tier, tenureMonths: months};
   }
 
-  // "AI analysis" (local heuristic, no network)
   function aiAnalyze(note, ts, n, points, target){
     const text = (note || "").toLowerCase();
     const tags = [];
@@ -447,7 +465,7 @@ function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventLi
       if(tags.includes("career growth")) base.push("下一步：寫下 3 個「下一份工作必備條件」。");
       if(tags.includes("health")) base.push("下一步：安排 1 個可立刻做的恢復行為（睡眠、散步、補水）。");
       if(n >= (target-10)) base.push("倒數提醒：可開始更新履歷/作品集、建立職缺清單、準備交接。");
-      return base.join("\n");
+      return base.join("\\n");
     })();
 
     return {tags, summary, advice};
@@ -527,8 +545,6 @@ function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventLi
     return {token: p.get("token")||"", email: p.get("email")||""};
   }
 
-  
-  
   function dashboardView(){
     const target = clampTarget(state.settings.target);
     const remain = Math.max(0, target - state.points);
@@ -539,7 +555,6 @@ function on(id,ev,fn){const el=document.getElementById(id); if(el) el.addEventLi
     const negCount = recent14.filter(l=>/爛|煩|氣|討厭|受不了|想離開|不行|崩|慘|焦慮|痛苦|hate|angry|tired|stressed|壓力|崩潰|burnout|累|失眠|胃痛|頭痛/.test((l.note||"").toLowerCase())).length;
     const burnout = Math.max(0, Math.min(100, Math.round(progress*0.55 + (recent14.length? (negCount/recent14.length)*100*0.45 : 0))));
 
-    // insights buckets (last 30 logs)
     const recent30 = logs.slice(0,30);
     const buckets = {work:0, people:0, pay:0, health:0, growth:0, other:0};
     recent30.forEach(l=>{
@@ -608,7 +623,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
       </div>
     `;
   }
-
 
   function pointsView(){
     const target = clampTarget(state.settings.target);
@@ -696,7 +710,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
     `;
   }
 
-  
   function appShellView(sub){
     const target = clampTarget(state.settings.target);
     const remain = Math.max(0, target - state.points);
@@ -725,9 +738,9 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
               <div class="kpi">Sign out · ${state.points}/${target} · remaining ${remain}</div>
             </div>
           </div>
-          <div style="display:flex; gap:10px;">
-            <button class="btn ghost" style="width:auto" id="btnSettings">Settings</button>
-            <button class="btn primary" style="width:auto" id="btnSignout">Sign out</button>
+          <div class="topIcons">
+            <button class="iconBtn ghost" id="btnSettings" aria-label="Settings" title="Settings">⚙</button>
+            <button class="iconBtn primary" id="btnSignout" aria-label="Sign out" title="Sign out">↗</button>
           </div>
         </div>
 
@@ -773,7 +786,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
         return;
       }
 
-      // First-time setup
       if(!state.user){
         openModal(
           "Set recovery email",
@@ -816,7 +828,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
         return;
       }
 
-      // normal login
       if(username !== state.user.username){
         toast("Wrong login", "Username mismatch.");
         return;
@@ -994,7 +1005,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
     });
   }
 
-  
   function bindAppShell(sub){
     const drawer = document.getElementById("drawer");
     const overlay = document.getElementById("drawerOverlay");
@@ -1005,12 +1015,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
       drawer.setAttribute("aria-hidden","true");
       overlay.setAttribute("aria-hidden","true");
     };
-    const openDrawer = ()=>{
-      drawer.classList.add("show");
-      overlay.classList.add("show");
-      drawer.setAttribute("aria-hidden","false");
-      overlay.setAttribute("aria-hidden","false");
-    };
 
     on("btnDrawer","click", ()=>{
       if(sub === "points") location.hash = "#/app/dashboard";
@@ -1018,7 +1022,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
     });
     overlay.addEventListener("click", closeDrawer);
 
-    // sign out
     on("btnSignout","click", ()=>{
       lock();
       toast("Signed out", "");
@@ -1026,7 +1029,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
       render();
     });
 
-    // settings modal (global)
     on("btnSettings","click", ()=>{
       const startDate = state.settings.startDate || "";
       const rec = recommendedPointsFromStart(startDate);
@@ -1086,7 +1088,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
       };
     });
 
-    // dashboard click-through
     if(sub === "dashboard"){
       const goPoints = ()=>{ location.hash = "#/app/points"; };
       const bindCard = (id, fn)=>{
@@ -1105,7 +1106,6 @@ Tags: ${escapeHTML(snap.tags.join(", "))}</div>
 
     if(sub !== "points") return;
 
-    // points bindings
     const target = clampTarget(state.settings.target);
     const pageCount = Math.max(1, Math.ceil(target / PAGE_SIZE));
     const page = Math.min(pageCount-1, Math.max(0, state.settings.page || 0));
@@ -1200,8 +1200,6 @@ ${analysis.advice}</textarea>
       });
     });
   }
-
-  // boot
 
   window.addEventListener("hashchange", render);
 
