@@ -440,23 +440,27 @@
 
   
   function aiAnalyze(note, ts, n, points, target){
-    const text = (note || "").toLowerCase().trim();
-    const tags = [];
-    const add = (t)=>{ if(!tags.includes(t)) tags.push(t); };
+  const text = (note || "").toLowerCase();
 
-    const has = {
-      sudden: /突然|臨時|一下子|忽然|急改|改來改去/.test(text),
-      noNotice: /沒講|沒提前講|沒通知|未告知|資訊沒同步|不講|不說/.test(text),
-      redo: /重做|重工|返工|重跑|重新|做表|改表|重算/.test(text),
-      process: /流程|制度|sop|版本|變更|改方式|改規格|改需求|改單|報價|對帳|核銷|請款|交接|表單|格式|欄位/.test(text),
-      people: /同事|主管|老闆|老闆娘|團隊|溝通|人際|情緒勒索|推來推去|踢皮球/.test(text),
-      overload: /加班|超時|爆量|忙|趕|壓力|崩潰|burnout|疲|累|撐不住|整天|整個下午|一直做/.test(text),
-      compensation: /薪水|加薪|年終|獎金|待遇|福利|調薪|底薪|bonus|raise|compensation/.test(text),
-      growth: /成長|學習|學不到|沒發展|職涯|career|轉職|升遷|前景|技能|履歷|作品集/.test(text),
-      health: /健康|睡眠|失眠|焦慮|胃痛|頭痛|生病|心悸|胸悶|看醫生|藥/.test(text),
-      unfair: /尊重|委屈|不被重視|不公平|背鍋|被當|被看不起|功勞/.test(text),
-      negative: /爛|煩|氣|討厭|受不了|想離開|不行|崩|慘|焦慮|痛苦|hate|angry|tired|stressed/.test(text)
-    };
+  let core = "需要釐清問題";
+  if(/沒講|突然/.test(text)) core = "變動未通知導致問題";
+  else if(/累|壓力/.test(text)) core = "負荷過高";
+  else if(/同事|主管/.test(text)) core = "溝通問題";
+
+  let risk = "低";
+  if(/累|壓力/.test(text)) risk = "中";
+  if(/失眠|焦慮/.test(text)) risk = "高";
+
+  let level = risk==="高"?"高優先":risk==="中"?"中優先":"可觀察";
+
+  const action = [
+    "釐清事件原因",
+    "建立改善方式"
+  ].join("
+");
+
+  return { core, risk, level, action, tags:["auto"] };
+};
 
     // tagging priority
     if(has.process || has.redo || (has.sudden && has.noNotice)) add("system / process");
@@ -519,52 +523,7 @@
 
     // Recommended actions
     const actions = [];
-    const actionBlocks = {
-      process: [
-        "建立變更紀錄（變更前 / 後 / 影響）",
-        "設計最小通知機制（時間 / 對象 / 內容）"
-      ],
-      people: [
-        "用『事實 / 影響 / 需求』重寫事件",
-        "確認責任邊界與回報方式"
-      ],
-      workload: [
-        "找一項可刪減或延後的任務",
-        "避免同時處理多個高消耗任務"
-      ],
-      compensation: [
-        "整理市場薪資區間",
-        "列出可談條件與底線"
-      ],
-      growth: [
-        "定義下一份工作3個必要條件",
-        "開始建立職缺清單"
-      ],
-      health: [
-        "優先安排恢復行為（睡眠/休息）",
-        "避免連續高壓時段"
-      ]
-    };
     actions.push(`進度：第 ${n} 點（${progress}%）｜日期：${when}`);
-
-    if(tags.includes("system / process")){
-      actionBlocks.process.forEach(a=>actions.push("建議行動：" + a));
-    }
-    if(tags.includes("people / communication")){
-      actionBlocks.people.forEach(a=>actions.push("建議行動：" + a));
-    }
-    if(tags.includes("workload / burnout")){
-      actionBlocks.workload.forEach(a=>actions.push("建議行動：" + a));
-    }
-    if(tags.includes("compensation")){
-      actionBlocks.compensation.forEach(a=>actions.push("建議行動：" + a));
-    }
-    if(tags.includes("career growth")){
-      actionBlocks.growth.forEach(a=>actions.push("建議行動：" + a));
-    }
-    if(tags.includes("health")){
-      actionBlocks.health.forEach(a=>actions.push("建議行動：" + a));
-    }
 
     if((has.process || has.redo) && has.noNotice){
       actions.push("建議行動：把「變更前 / 變更後 / 哪一步開始重工」寫成 3 行，保留成下次可直接引用的紀錄。");
